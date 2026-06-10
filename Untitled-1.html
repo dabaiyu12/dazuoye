@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>潮物仓 | 电商网站 - Web编程大作业</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Roboto, sans-serif; }
+        body { background: #f5f7fb; }
+        .container { max-width: 1400px; margin: 0 auto; padding: 0 24px; }
+        
+        /* 头部 - 显示学号姓名 */
+        .top-banner { background: #1a1a2e; color: #ffd700; text-align: center; padding: 8px; font-size: 14px; }
+        .identity-card { background: linear-gradient(135deg, #ff6b35, #f7931e); color: white; text-align: center; padding: 12px; font-weight: bold; font-size: 18px; }
+        
+        /* 导航栏 */
+        .navbar { background: white; box-shadow: 0 2px 12px rgba(0,0,0,0.08); position: sticky; top: 0; z-index: 100; }
+        .nav-flex { display: flex; justify-content: space-between; align-items: center; padding: 14px 0; flex-wrap: wrap; }
+        .logo h2 { color: #ff6b35; }
+        .nav-links { display: flex; gap: 25px; align-items: center; flex-wrap: wrap; }
+        .nav-links a { text-decoration: none; color: #333; font-weight: 600; cursor: pointer; padding: 8px 0; }
+        .nav-links a:hover, .nav-links a.active { color: #ff6b35; border-bottom: 2px solid #ff6b35; }
+        .cart-count { background: #ff6b35; color: white; border-radius: 50%; padding: 2px 7px; font-size: 12px; margin-left: 5px; }
+        
+        /* 页面切换 */
+        .page { display: none; }
+        .page.active { display: block; animation: fadeIn 0.3s ease; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        
+        /* 侧边栏 */
+        .home-layout { display: flex; gap: 25px; margin: 20px 0; }
+        .sidebar-categories { width: 220px; background: white; border-radius: 16px; padding: 15px 0; height: fit-content; position: sticky; top: 80px; }
+        .sidebar-categories h4 { padding: 0 15px 12px; border-bottom: 1px solid #eee; color: #ff6b35; }
+        .sidebar-cat-item { padding: 10px 20px; cursor: pointer; transition: 0.2s; font-size: 14px; }
+        .sidebar-cat-item:hover, .sidebar-cat-item.active { background: #fff0e8; color: #ff6b35; border-left: 3px solid #ff6b35; }
+        .main-content { flex: 1; }
+        @media (max-width: 900px) { .home-layout { flex-direction: column; } .sidebar-categories { width: 100%; display: flex; flex-wrap: wrap; padding: 10px; } .sidebar-cat-item { padding: 6px 15px; border-radius: 20px; } }
+        
+        /* 轮播图 */
+        .carousel-container { margin: 20px 0; position: relative; border-radius: 20px; overflow: hidden; }
+        .carousel-slides { display: flex; transition: transform 0.5s ease; }
+        .carousel-slide { min-width: 100%; height: 350px; background-size: cover; background-position: center; background-color: #e9ecef; }
+        .carousel-btn { position: absolute; top: 50%; transform: translateY(-50%); background: rgba(0,0,0,0.5); color: white; border: none; padding: 10px 16px; border-radius: 50%; cursor: pointer; }
+        .carousel-btn:hover { background: #ff6b35; }
+        .prev { left: 15px; }
+        .next { right: 15px; }
+        .dots { text-align: center; padding: 12px; }
+        .dot { display: inline-block; width: 10px; height: 10px; background: #bbb; border-radius: 50%; margin: 0 5px; cursor: pointer; }
+        .dot.active { background: #ff6b35; }
+        
+        /* 搜索排序栏 */
+        .search-sort-bar { display: flex; gap: 15px; margin: 20px 0; flex-wrap: wrap; align-items: center; }
+        .search-bar { flex: 3; display: flex; gap: 10px; }
+        .search-bar input { flex: 1; padding: 12px 20px; border: 1px solid #ddd; border-radius: 40px; font-size: 16px; }
+        .search-bar button, .sort-btn { padding: 12px 28px; background: #ff6b35; color: white; border: none; border-radius: 40px; cursor: pointer; }
+        .sort-bar { display: flex; gap: 10px; align-items: center; }
+        .sort-btn { background: #f0f0f0; color: #333; }
+        .sort-btn.active, .sort-btn:hover { background: #ff6b35; color: white; }
+        
+        /* 商品网格 */
+        .products-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 25px; margin: 20px 0; }
+        .product-card { background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.08); transition: 0.3s; }
+        .product-card:hover { transform: translateY(-5px); }
+        .product-img { width: 100%; height: 200px; background: #f8f9fa; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+        .product-img img { width: 100%; height: 100%; object-fit: cover; }
+        .product-info { padding: 16px; }
+        .product-title { font-weight: 600; font-size: 14px; height: 40px; overflow: hidden; cursor: pointer; }
+        .product-price { color: #ff6b35; font-size: 18px; font-weight: bold; margin: 8px 0; }
+        .product-rating { margin-bottom: 8px; }
+        .star { color: #ffc107; font-size: 12px; }
+        .star.empty { color: #ddd; }
+        .product-actions { display: flex; gap: 10px; }
+        .btn-add, .btn-view { flex: 1; padding: 8px; border: none; border-radius: 30px; cursor: pointer; }
+        .btn-add { background: #ff6b35; color: white; }
+        .btn-view { background: #f0f0f0; }
+        
+        /* 分页 */
+        .pagination { display: flex; justify-content: center; gap: 10px; margin: 30px 0; }
+        .page-btn { padding: 8px 15px; background: white; border: 1px solid #ddd; border-radius: 8px; cursor: pointer; }
+        .page-btn.active, .page-btn:hover { background: #ff6b35; color: white; }
+        
+        /* 购物车 */
+        .cart-items { background: white; border-radius: 20px; padding: 20px; }
+        .cart-item { display: flex; justify-content: space-between; align-items: center; padding: 15px 0; border-bottom: 1px solid #eee; flex-wrap: wrap; gap: 10px; }
+        .cart-item-info { flex: 2; }
+        .cart-quantity { display: flex; align-items: center; gap: 8px; }
+        .qty-btn { width: 30px; height: 30px; background: #f0f0f0; border: none; border-radius: 50%; cursor: pointer; }
+        .cart-remove { color: #e74c3c; cursor: pointer; margin-left: 10px; }
+        .cart-total { text-align: right; padding: 20px; font-size: 20px; font-weight: bold; }
+        .cart-actions { display: flex; justify-content: flex-end; gap: 15px; margin-top: 20px; }
+        .btn-checkout { background: #28a745; color: white; border: none; padding: 12px 32px; border-radius: 40px; cursor: pointer; }
+        .btn-clear-cart { background: #e74c3c; color: white; border: none; padding: 12px 24px; border-radius: 40px; cursor: pointer; }
+        
+        /* 订单 */
+        .order-card { border: 1px solid #eee; border-radius: 12px; padding: 15px; margin: 15px 0; background: white; }
+        .order-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; margin-bottom: 10px; }
+        .order-status { background: #28a745; color: white; padding: 4px 12px; border-radius: 20px; font-size: 12px; }
+        .delete-order-btn { background: #e74c3c; color: white; border: none; padding: 5px 12px; border-radius: 20px; cursor: pointer; }
+        
+        /* 个人中心 */
+        .address-item { display: flex; justify-content: space-between; padding: 12px; background: #f8f9fa; margin: 10px 0; border-radius: 12px; }
+        .form-input { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 12px; }
+        .order-section { background: white; border-radius: 20px; padding: 24px; margin: 20px 0; }
+        
+        footer { background: #1a1a2e; color: #aaa; text-align: center; padding: 30px; margin-top: 50px; }
+        .back-to-top { position: fixed; bottom: 30px; right: 30px; background: #ff6b35; color: white; width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 99; font-size: 24px; }
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center; }
+        .modal.active { display: flex; }
+        .modal-content { background: white; padding: 30px; border-radius: 24px; width: 380px; max-width: 90%; text-align: center; }
+        .modal-content input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 12px; }
+        .modal-content button { width: 100%; padding: 12px; background: #ff6b35; color: white; border: none; border-radius: 40px; cursor: pointer; }
+        .demo-account { font-size: 12px; color: #888; margin-top: 15px; }
+        @media (max-width: 700px) { .nav-flex { flex-direction: column; } .search-sort-bar { flex-direction: column; } .cart-item { flex-direction: column; align-items: flex-start; } }
+    </style>
+</head>
+<body>
+
+<div class="top-banner">🚀 模仿创新项目 | 电商网站设计与实现</div>
+<div class="identity-card">📚 学号：24215220230 | 姓名：唐宇 | Web编程技术大作业 | 共42款精选商品</div>
+
+<div class="navbar">
+    <div class="container nav-flex">
+        <div class="logo"><h2>🛍️ 潮物仓</h2></div>
+        <div class="nav-links">
+            <a onclick="showPage('home')" id="navHome" class="active">🏠 首页</a>
+            <a onclick="showPage('cart')" id="navCart">🛒 购物车 <span id="navCartCount" class="cart-count">0</span></a>
+            <a onclick="showPage('order')" id="navOrder">📦 我的订单</a>
+            <a onclick="showPage('profile')" id="navProfile">👤 个人中心</a>
+            <a onclick="openLoginModal()" id="navLogin">🔐 登录</a>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    <!-- 首页 -->
+    <div id="homePage" class="page active">
+        <div class="home-layout">
+            <div class="sidebar-categories" id="sidebarCategories"><h4>📂 全部分类</h4></div>
+            <div class="main-content">
+                <div class="carousel-container">
+                    <div class="carousel-slides" id="carouselSlides"></div>
+                    <button class="carousel-btn prev" onclick="changeSlide(-1)">❮</button>
+                    <button class="carousel-btn next" onclick="changeSlide(1)">❯</button>
+                    <div class="dots" id="carouselDots"></div>
+                </div>
+                <div class="search-sort-bar">
+                    <div class="search-bar">
+                        <input type="text" id="searchInput" placeholder="搜索商品...">
+                        <button onclick="searchProducts()">🔍 搜索</button>
+                    </div>
+                    <div class="sort-bar">
+                        <span>排序：</span>
+                        <button class="sort-btn" onclick="sortProducts('default')">默认</button>
+                        <button class="sort-btn" onclick="sortProducts('price-asc')">价格↑</button>
+                        <button class="sort-btn" onclick="sortProducts('price-desc')">价格↓</button>
+                    </div>
+                </div>
+                <div id="productsGrid" class="products-grid"></div>
+                <div id="pagination" class="pagination"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 购物车 -->
+    <div id="cartPage" class="page">
+        <h2 style="margin:20px 0;">🛒 我的购物车</h2>
+        <div class="cart-items" id="cartItemsList"></div>
+        <div class="cart-total" id="cartTotal"></div>
+        <div class="cart-actions">
+            <button class="btn-clear-cart" onclick="clearCart()">清空购物车</button>
+            <button class="btn-checkout" onclick="goToCheckout()">去结算 ➡️</button>
+        </div>
+    </div>
+
+    <!-- 订单结算 -->
+    <div id="orderPage" class="page">
+        <div class="order-section">
+            <h2>📋 确认订单</h2>
+            <div id="orderProducts" style="margin:15px 0;"></div>
+            <input type="text" id="receiverName" class="form-input" placeholder="收货人" value="唐宇">
+            <input type="tel" id="receiverPhone" class="form-input" placeholder="联系电话" value="13812345678">
+            <textarea id="receiverAddress" class="form-input" rows="2" placeholder="收货地址">广东省佛山市南海区大学城</textarea>
+            <button class="btn-checkout" onclick="submitOrder()" style="width:100%;">确认下单 ✅</button>
+        </div>
+        <div class="order-section">
+            <h2>📜 历史订单</h2>
+            <div id="orderHistory"></div>
+        </div>
+    </div>
+
+    <!-- 个人中心 -->
+    <div id="profilePage" class="page">
+        <div class="order-section">
+            <h2>👤 个人信息</h2>
+            <p><strong>用户名：</strong> <span id="displayName">唐宇</span></p>
+            <p><strong>学号：</strong> 24215220230</p>
+            <p><strong>会员等级：</strong> 黄金会员 ⭐</p>
+            <hr style="margin:20px 0">
+            <h3>📍 地址管理</h3>
+            <div id="addressList"></div>
+            <div style="display:flex; gap:10px; margin-top:15px;">
+                <input type="text" id="newAddress" class="form-input" placeholder="新地址" style="flex:2">
+                <button onclick="addAddress()" style="padding:10px 20px; background:#ff6b35; color:white; border:none; border-radius:30px;">➕ 添加</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 登录模态框 -->
+<div id="loginModal" class="modal">
+    <div class="modal-content">
+        <h2>🔐 登录</h2>
+        <input type="text" id="loginUsername" placeholder="用户名" value="demo">
+        <input type="password" id="loginPassword" placeholder="密码" value="123456">
+        <button onclick="handleLogin()">登 录</button>
+        <div class="demo-account">📢 演示账号：demo / 123456</div>
+    </div>
+</div>
+
+<div class="back-to-top" onclick="window.scrollTo({top:0, behavior:'smooth'})">↑</div>
+<footer>© 2026 潮物仓 | 共42款商品 | 功能：搜索/分类/排序/分页 | 购物车增删改 | 订单管理 | 地址管理 | 数据本地存储</footer>
+
+<script>
+    // ==================== 完整商品数据（42件商品） ====================
+    const products = [
+        // 厨房用品 (5件)
+        { id: 1, name: "哈尔斯长效保温壶", category: "厨房用品", price: 129, rating: 4.8, img: "kitchen4.png" },
+        { id: 2, name: "轻奢陶瓷餐具套装", category: "厨房用品", price: 89, rating: 4.7, img: "kitchen5.png" },
+        { id: 3, name: "戚风蛋糕烘焙模具", category: "厨房用品", price: 39, rating: 4.6, img: "kitchen6.png" },
+        { id: 4, name: "简米陶瓷托盘套装", category: "厨房用品", price: 49, rating: 4.5, img: "kitchen7.png" },
+        { id: 5, name: "哈尔斯旋转防漏随行杯", category: "厨房用品", price: 59, rating: 4.7, img: "kitchen8.png" },
+        
+        // 生鲜美食 (9件)
+        { id: 6, name: "黑椒牛排套餐", category: "生鲜美食", price: 59, rating: 4.9, img: "MS1.JPEG" },
+        { id: 7, name: "意式培根披萨", category: "生鲜美食", price: 39, rating: 4.8, img: "MS2.JPEG" },
+        { id: 8, name: "日式火锅食材拼盘", category: "生鲜美食", price: 89, rating: 4.7, img: "MS3.JPEG" },
+        { id: 9, name: "台式卤肉拌饭", category: "生鲜美食", price: 29, rating: 4.6, img: "new_goods_3.jpg" },
+        { id: 10, name: "刺身级冰鲜三文鱼排", category: "生鲜美食", price: 129, rating: 4.9, img: "fresh_goods_1.jpg" },
+        { id: 11, name: "红功夫麻辣小龙虾尾", category: "生鲜美食", price: 89, rating: 4.8, img: "fresh_goods_2.jpg" },
+        { id: 12, name: "冰鲜大黄鱼", category: "生鲜美食", price: 159, rating: 4.7, img: "fresh_goods_3.jpg" },
+        { id: 13, name: "即食海参礼盒", category: "生鲜美食", price: 399, rating: 4.9, img: "fresh_goods_4.jpg" },
+        { id: 14, name: "新鲜白心火龙果", category: "生鲜美食", price: 39, rating: 4.6, img: "fresh_goods_5.jpg" },
+        
+        // 家居家电 (6件)
+        { id: 15, name: "手持无线吸尘器", category: "家居家电", price: 299, rating: 4.8, img: "new_goods_1.jpg" },
+        { id: 16, name: "智能对开门冰箱", category: "家居家电", price: 2999, rating: 4.9, img: "new_goods_2.jpg" },
+        { id: 17, name: "KN95防护口罩", category: "家居家电", price: 39, rating: 4.7, img: "goods1.png" },
+        { id: 18, name: "北欧简约布艺沙发", category: "家居家电", price: 2999, rating: 4.9, img: "goods4.png" },
+        { id: 19, name: "实木床头柜", category: "家居家电", price: 299, rating: 4.7, img: "home_left.png" },
+        { id: 20, name: "北欧客厅地毯", category: "家居家电", price: 279, rating: 4.6, img: "home1.png" },
+        
+        // 配饰饰品 (4件)
+        { id: 21, name: "机械镂空石英手表", category: "配饰饰品", price: 199, rating: 4.7, img: "new_goods_4.jpg" },
+        { id: 22, name: "胡桃木首饰收纳盒", category: "配饰饰品", price: 199, rating: 4.8, img: "goods2.png" },
+        { id: 23, name: "水果图案短袜船袜", category: "配饰饰品", price: 29, rating: 4.5, img: "clothes4.png" },
+        { id: 24, name: "男士真皮商务腰带", category: "配饰饰品", price: 159, rating: 4.7, img: "clothes6.png" },
+        
+        // 图书文教 (2件)
+        { id: 25, name: "蒙特梭利早教绘本套装", category: "图书文教", price: 59, rating: 4.8, img: "recommend1.png" },
+        { id: 26, name: "简约风手账本笔记本", category: "图书文教", price: 49, rating: 4.6, img: "goods3.png" },
+        
+        // 鞋履 (3件)
+        { id: 27, name: "网面透气休闲运动鞋", category: "鞋履", price: 299, rating: 4.8, img: "clothes1.png" },
+        { id: 28, name: "卡通涂鸦高帮帆布鞋", category: "鞋履", price: 119, rating: 4.7, img: "clothes7.png" },
+        { id: 29, name: "复古皮质拼接连衣裙", category: "鞋履", price: 259, rating: 4.9, img: "colthes_left.png" },
+        
+        // 上装 (3件)
+        { id: 30, name: "JESSYLINE蝴蝶结开衫", category: "上装", price: 189, rating: 4.6, img: "clothes2.png" },
+        { id: 31, name: "GIRDEAR高领羊毛打底衫", category: "上装", price: 89, rating: 4.7, img: "clothes3.png" },
+        { id: 32, name: "宽松翻领针织毛衣", category: "上装", price: 169, rating: 4.7, img: "clothes10.png" },
+        
+        // 裤装 (2件)
+        { id: 33, name: "休闲直筒卫裤（3色装）", category: "裤装", price: 129, rating: 4.6, img: "clothes8.png" },
+        { id: 34, name: "束脚休闲运动裤", category: "裤装", price: 89, rating: 4.5, img: "clothes11.png" },
+        
+        // 外套 (1件)
+        { id: 35, name: "白色牛仔外套", category: "外套", price: 239, rating: 4.8, img: "clothes9.png" },
+        
+        // 套装 (1件)
+        { id: 36, name: "蓝格纹衬衫+爱心短裙套装", category: "套装", price: 199, rating: 4.8, img: "clothes12.png" },
+        
+        // 裙装 (2件)
+        { id: 37, name: "黑色收腰衬衫连衣裙", category: "裙装", price: 229, rating: 4.8, img: "clothes5.png" },
+        { id: 38, name: "复古皮质拼接连衣裙", category: "裙装", price: 259, rating: 4.9, img: "colthes_left.png" },
+        
+        // 生鲜美食补充 (4件)
+        { id: 39, name: "新鲜沃柑蜜桔", category: "生鲜美食", price: 29, rating: 4.5, img: "fresh_goods_6.jpg" },
+        { id: 40, name: "新鲜牛油果", category: "生鲜美食", price: 49, rating: 4.7, img: "fresh_goods_7.jpg" },
+        { id: 41, name: "新鲜山竹", category: "生鲜美食", price: 59, rating: 4.6, img: "fresh_goods_8.jpg" },
+        { id: 42, name: "53度飞天茅台酒", category: "生鲜美食", price: 1499, rating: 5.0, img: "fresh_goods_cover.png" }
+    ];
+
+    const carouselImages = ["banner_1.png", "banner1.png", "fresh_left.png"];
+    
+    // ==================== 全局变量 ====================
+    let cart = [];
+    let orders = [];
+    let addresses = ["广东省佛山市南海区大学城"];
+    let currentUser = "唐宇";
+    let currentCategory = "all";
+    let currentKeyword = "";
+    let currentSort = "default";
+    let currentPage = 1;
+    let currentSlide = 0;
+    const pageSize = 8;
+
+    // ==================== 数据加载与保存 ====================
+    function loadData() {
+        cart = JSON.parse(localStorage.getItem("cart") || "[]");
+        orders = JSON.parse(localStorage.getItem("orders") || "[]");
+        addresses = JSON.parse(localStorage.getItem("addresses") || '["广东省佛山市南海区大学城"]');
+        updateCartCount();
+        renderSidebar();
+        renderProducts();
+        renderCart();
+        renderOrders();
+        renderAddress();
+    }
+    function saveAll() {
+        localStorage.setItem("cart", JSON.stringify(cart));
+        localStorage.setItem("orders", JSON.stringify(orders));
+        localStorage.setItem("addresses", JSON.stringify(addresses));
+        updateCartCount();
+        renderCart();
+        renderOrders();
+    }
+    function updateCartCount() {
+        document.getElementById("navCartCount").innerText = cart.reduce((s,i)=>s+i.qty, 0);
+    }
+
+    // ==================== 轮播图 ====================
+    function initCarousel() {
+        let slides = document.getElementById("carouselSlides");
+        let dots = document.getElementById("carouselDots");
+        slides.innerHTML = carouselImages.map(img => `<div class="carousel-slide" style="background-image: url('images/${img}');"></div>`).join("");
+        dots.innerHTML = carouselImages.map((_, i) => `<span class="dot ${i===0?'active':''}" onclick="goToSlide(${i})"></span>`).join("");
+        updateCarousel();
+        setInterval(() => changeSlide(1), 4000);
+    }
+    function updateCarousel() {
+        document.getElementById("carouselSlides").style.transform = `translateX(-${currentSlide*100}%)`;
+        document.querySelectorAll(".dot").forEach((d,i)=>{ d.classList.toggle("active", i===currentSlide); });
+    }
+    function changeSlide(d) { currentSlide = (currentSlide+d+carouselImages.length)%carouselImages.length; updateCarousel(); }
+    function goToSlide(i) { currentSlide = i; updateCarousel(); }
+
+    // ==================== 分类侧边栏 ====================
+    function renderSidebar() {
+        let cats = ["all", "厨房用品", "生鲜美食", "家居家电", "配饰饰品", "图书文教", "鞋履", "上装", "裤装", "外套", "套装", "裙装"];
+        let names = { all:"全部", 厨房用品:"🍳 厨房", 生鲜美食:"🥩 生鲜", 家居家电:"🏠 家电", 配饰饰品:"⌚ 配饰", 图书文教:"📚 图书", 鞋履:"👟 鞋履", 上装:"👕 上装", 裤装:"👖 裤装", 外套:"🧥 外套", 套装:"👗 套装", 裙装:"👗 裙装" };
+        let html = `<h4>📂 全部分类</h4>`;
+        cats.forEach(cat => { html += `<div class="sidebar-cat-item ${currentCategory===cat?'active':''}" onclick="filterByCategory('${cat}')">${names[cat]||cat}</div>`; });
+        document.getElementById("sidebarCategories").innerHTML = html;
+    }
+    function filterByCategory(cat) { currentCategory = cat; currentPage = 1; renderSidebar(); renderProducts(); }
+    function sortProducts(type) { currentSort = type; renderProducts(); }
+    function searchProducts() { currentKeyword = document.getElementById("searchInput").value.trim(); currentPage = 1; renderProducts(); }
+
+    // ==================== 商品渲染 ====================
+    function renderProducts() {
+        let filtered = products.filter(p => 
+            (currentCategory==="all" || p.category===currentCategory) && 
+            (!currentKeyword || p.name.includes(currentKeyword))
+        );
+        if(currentSort === "price-asc") filtered.sort((a,b)=>a.price-b.price);
+        else if(currentSort === "price-desc") filtered.sort((a,b)=>b.price-a.price);
+        
+        let totalPages = Math.ceil(filtered.length / pageSize);
+        let start = (currentPage-1)*pageSize;
+        let pageProducts = filtered.slice(start, start+pageSize);
+        
+        let grid = document.getElementById("productsGrid");
+        if(pageProducts.length === 0) {
+            grid.innerHTML = "<div style='grid-column:1/-1; text-align:center; padding:50px;'>没有找到商品</div>";
+        } else {
+            grid.innerHTML = pageProducts.map(p => `
+                <div class="product-card">
+                    <div class="product-img" onclick="showDetail(${p.id})"><img src="images/${p.img}" onerror="this.innerHTML='📦'"></div>
+                    <div class="product-info">
+                        <div class="product-title">${p.name}</div>
+                        <div class="product-rating">${'★'.repeat(Math.floor(p.rating))}${'☆'.repeat(5-Math.floor(p.rating))} ${p.rating}</div>
+                        <div class="product-price">¥${p.price}</div>
+                        <div class="product-actions">
+                            <button class="btn-add" onclick="addToCart(${p.id})">加入购物车</button>
+                            <button class="btn-view" onclick="showDetail(${p.id})">详情</button>
+                        </div>
+                    </div>
+                </div>
+            `).join("");
+        }
+        
+        let paginationHtml = "";
+        for(let i=1; i<=totalPages; i++) {
+            paginationHtml += `<button class="page-btn ${currentPage===i?'active':''}" onclick="goToPage(${i})">${i}</button>`;
+        }
+        document.getElementById("pagination").innerHTML = paginationHtml;
+    }
+    function goToPage(page) { currentPage = page; renderProducts(); }
+    function showDetail(id) {
+        let p = products.find(p => p.id === id);
+        alert(`📦 ${p.name}\n💰 价格：¥${p.price}\n⭐ 评分：${p.rating}\n📂 分类：${p.category}`);
+    }
+
+    // ==================== 购物车功能 ====================
+    function addToCart(id) {
+        let p = products.find(p => p.id === id);
+        let existing = cart.find(item => item.id === id);
+        if(existing) existing.qty++;
+        else cart.push({ id: p.id, name: p.name, price: p.price, qty: 1 });
+        saveAll();
+        alert(`已添加 ${p.name}`);
+    }
+    function renderCart() {
+        let container = document.getElementById("cartItemsList");
+        let totalDiv = document.getElementById("cartTotal");
+        if(cart.length === 0) {
+            container.innerHTML = "<div style='text-align:center; padding:50px;'>购物车是空的</div>";
+            totalDiv.innerHTML = "";
+            return;
+        }
+        let total = 0;
+        container.innerHTML = cart.map(item => {
+            let subtotal = item.price * item.qty;
+            total += subtotal;
+            return `
+                <div class="cart-item">
+                    <div class="cart-item-info"><strong>${item.name}</strong><br>¥${item.price}</div>
+                    <div class="cart-quantity">
+                        <button class="qty-btn" onclick="changeQty(${item.id}, -1)">-</button>
+                        <span style="min-width:30px; text-align:center;">${item.qty}</span>
+                        <button class="qty-btn" onclick="changeQty(${item.id}, 1)">+</button>
+                        <span class="cart-remove" onclick="removeFromCart(${item.id})">删除</span>
+                    </div>
+                    <div>¥${subtotal.toFixed(2)}</div>
+                </div>
+            `;
+        }).join("");
+        totalDiv.innerHTML = `<h3>总计：¥${total.toFixed(2)}</h3>`;
+    }
+    function changeQty(id, delta) {
+        let idx = cart.findIndex(i => i.id === id);
+        if(idx !== -1) {
+            let newQty = cart[idx].qty + delta;
+            if(newQty <= 0) cart.splice(idx, 1);
+            else cart[idx].qty = newQty;
+            saveAll();
+        }
+    }
+    function removeFromCart(id) {
+        cart = cart.filter(i => i.id !== id);
+        saveAll();
+    }
+    function clearCart() {
+        if(cart.length === 0) return alert("购物车已是空的");
+        if(confirm("清空购物车？")) { cart = []; saveAll(); alert("已清空"); }
+    }
+
+    // ==================== 订单功能 ====================
+    function goToCheckout() {
+        if(cart.length === 0) return alert("购物车为空");
+        showPage("order");
+        renderOrderPreview();
+    }
+    function renderOrderPreview() {
+        let total = 0;
+        let html = "<h3>待结算商品：</h3>";
+        cart.forEach(item => {
+            let subtotal = item.price * item.qty;
+            total += subtotal;
+            html += `<div style="display:flex; justify-content:space-between; padding:8px 0;">${item.name} x ${item.qty}<span>¥${subtotal}</span></div>`;
+        });
+        html += `<hr><div style="font-size:18px; font-weight:bold; text-align:right;">总额：¥${total}</div>`;
+        document.getElementById("orderProducts").innerHTML = html;
+    }
+    function submitOrder() {
+        if(cart.length === 0) return alert("购物车为空");
+        let name = document.getElementById("receiverName").value.trim();
+        let phone = document.getElementById("receiverPhone").value.trim();
+        let addr = document.getElementById("receiverAddress").value.trim();
+        if(!name || !phone || !addr) return alert("请填写完整信息");
+        
+        let total = cart.reduce((s,i) => s + i.price * i.qty, 0);
+        let newOrder = {
+            id: Date.now(),
+            date: new Date().toLocaleString(),
+            items: JSON.parse(JSON.stringify(cart)),
+            total: total,
+            receiver: name,
+            phone: phone,
+            address: addr,
+            status: "已完成"
+        };
+        orders.unshift(newOrder);
+        cart = [];
+        saveAll();
+        alert(`订单提交成功！\n实付：¥${total}`);
+        renderOrders();
+        renderOrderPreview();
+        showPage("order");
+    }
+    function renderOrders() {
+        let container = document.getElementById("orderHistory");
+        if(orders.length === 0) {
+            container.innerHTML = "<div style='text-align:center; padding:30px;'>暂无订单</div>";
+            return;
+        }
+        container.innerHTML = orders.map(o => `
+            <div class="order-card">
+                <div class="order-header">
+                    <div><strong>📅 ${o.date}</strong><br>订单号：${o.id}</div>
+                    <div><span class="order-status">${o.status}</span>
+                    <button class="delete-order-btn" onclick="deleteOrder(${o.id})">删除</button></div>
+                </div>
+                <div>👤 ${o.receiver} | 📞 ${o.phone}</div>
+                <div>📍 ${o.address}</div>
+                <div>📦 ${o.items.map(i=>`${i.name}×${i.qty}`).join('、')}</div>
+                <div style="text-align:right; font-weight:bold;">¥${o.total}</div>
+            </div>
+        `).join("");
+    }
+    function deleteOrder(id) {
+        if(confirm("删除订单？")) {
+            orders = orders.filter(o => o.id !== id);
+            localStorage.setItem("orders", JSON.stringify(orders));
+            renderOrders();
+        }
+    }
+
+    // ==================== 地址管理 ====================
+    function renderAddress() {
+        let container = document.getElementById("addressList");
+        if(addresses.length === 0) { container.innerHTML = "<div>暂无地址</div>"; return; }
+        container.innerHTML = addresses.map((addr, idx) => `
+            <div class="address-item">
+                <span>📍 ${addr}</span>
+                <button onclick="deleteAddress(${idx})" style="background:#e74c3c; color:white; border:none; padding:5px 15px; border-radius:20px;">删除</button>
+            </div>
+        `).join("");
+    }
+    function addAddress() {
+        let newAddr = document.getElementById("newAddress").value.trim();
+        if(newAddr) { addresses.push(newAddr); localStorage.setItem("addresses", JSON.stringify(addresses)); renderAddress(); document.getElementById("newAddress").value = ""; alert("已添加"); }
+        else alert("请输入地址");
+    }
+    function deleteAddress(idx) {
+        if(confirm("删除地址？")) { addresses.splice(idx,1); localStorage.setItem("addresses", JSON.stringify(addresses)); renderAddress(); }
+    }
+
+    // ==================== 页面切换 ====================
+    function showPage(pageName) {
+        document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
+        document.getElementById(`${pageName}Page`).classList.add("active");
+        document.querySelectorAll(".nav-links a").forEach(link => link.classList.remove("active"));
+        document.getElementById(`nav${pageName.charAt(0).toUpperCase() + pageName.slice(1)}`).classList.add("active");
+        if(pageName === "cart") renderCart();
+        if(pageName === "order") { renderOrderPreview(); renderOrders(); }
+        if(pageName === "profile") renderAddress();
+    }
+
+    // ==================== 登录 ====================
+    function openLoginModal() { document.getElementById("loginModal").classList.add("active"); }
+    function handleLogin() {
+        let username = document.getElementById("loginUsername").value;
+        let password = document.getElementById("loginPassword").value;
+        if(username === "demo" && password === "123456") {
+            currentUser = username;
+            document.getElementById("displayName").innerHTML = username;
+            alert(`欢迎回来，${username}！`);
+            document.getElementById("loginModal").classList.remove("active");
+        } else {
+            alert("用户名或密码错误\n演示账号：demo / 123456");
+        }
+    }
+    document.getElementById("loginModal").addEventListener("click", function(e) { if(e.target === this) this.classList.remove("active"); });
+
+    // ==================== 启动 ====================
+    loadData();
+    initCarousel();
+</script>
+</body>
+</html>
